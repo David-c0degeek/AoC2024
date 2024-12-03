@@ -1,4 +1,4 @@
-﻿using AoC2024.Challenges;
+﻿using System.Reflection;
 using AoC2024.Interfaces;
 
 namespace AoC2024;
@@ -7,11 +7,7 @@ public static class Program
 {
     public static void Main(string[] args)
     {
-        var challenges = new List<IChallenge>
-        {
-            new Day1(),
-            new Day2()
-        };
+        var challenges = GetChallengesFromAssembly();
 
         foreach (var challenge in challenges)
         {
@@ -21,5 +17,15 @@ public static class Program
             Console.WriteLine($"Part 2: {results.part2}");
             Console.WriteLine();
         }
+    }
+
+    private static IOrderedEnumerable<IChallenge> GetChallengesFromAssembly()
+    {
+        return Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => !t.IsAbstract && typeof(IChallenge).IsAssignableFrom(t))
+            .Select(Activator.CreateInstance)
+            .Cast<IChallenge>()
+            .OrderBy(c => c.Day);
     }
 }
