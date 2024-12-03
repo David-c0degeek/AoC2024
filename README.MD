@@ -31,12 +31,12 @@ These instructions will help you set up a copy of the project on your local mach
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/David-c0degeek/AoC2004
+   git clone https://github.com/David-c0degeek/AoC2024
    ```
 
 2. Navigate to the project directory:
    ```bash
-   cd AoC2004
+   cd AoC2024
    ```
 
 3. Restore dependencies:
