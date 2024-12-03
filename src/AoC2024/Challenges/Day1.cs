@@ -14,16 +14,21 @@ namespace AoC2024.Challenges;
 /// Collect stars by solving puzzles. Two puzzles will be made available on each day in the Advent calendar; the second puzzle is unlocked when you complete the first. Each puzzle grants one star. Good luck!
 ///
 /// </summary>
-public class Day1 : IChallenge
+public class Day1(string? inputPath = null) : BaseDay(inputPath)
 {
-    public int Day => 1;
+    public override int Day => 1;
+
+    public override (string part1, string part2) Solve()
+    {
+        var input = LoadInput();
+        var distance = CalculateDistance(input.left, input.right);
+        var similarity = CalculateSimilarity(input.left, input.right);
+        return (distance.ToString(), similarity.ToString());
+    }
 
     private (List<int> left, List<int> right) LoadInput()
     {
-        var lines = File.ReadAllLines($"Inputs/Day{Day}.txt")
-            .Where(line => !string.IsNullOrWhiteSpace(line));
-            
-        return lines
+        return GetInput()
             .Select(line => line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries))
             .Aggregate((new List<int>(), new List<int>()), (acc, parts) =>
             {
@@ -31,16 +36,6 @@ public class Day1 : IChallenge
                 acc.Item2.Add(int.Parse(parts[1]));
                 return acc;
             });
-    }
-    
-    public (string part1, string part2) Solve()
-    {
-        var input = LoadInput();
-        
-        var distance = CalculateDistance(input.left, input.right);
-        var similarity = CalculateSimilarity(input.left, input.right);
-        
-        return (distance.ToString(), similarity.ToString());
     }
     
     /// <summary>

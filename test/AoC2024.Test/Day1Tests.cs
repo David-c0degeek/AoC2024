@@ -4,34 +4,19 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace AoC2024.Test;
 
 [TestClass]
-public class Day1Tests
+public class Day1Tests: BaseDayTests<Day1>
 {
-    private readonly List<int> _leftList = [3, 4, 2, 1, 3, 3];
-    private readonly List<int> _rightList = [4, 3, 5, 3, 9, 3];
+    protected override Day1 CreateSut() => new("TestData/Day1Sample.txt");
     
-    [TestMethod]
-    public void CalculateDistance_WithSampleInput_ReturnsExpectedResult()
-    {
-        // Arrange
-        const int expectedValue = 11;
-        
-        // Act
-        var result = Day1.CalculateDistance(_leftList, _rightList);
-        
-        // Assert
-        Assert.AreEqual(expectedValue, result); 
-    }
 
     [TestMethod]
-    public void CalculateSimilarity_WithSampleInput_ReturnsExpectedResult()
+    public void Solve_WithSampleInput_ReturnsExpectedResults()
     {
-        // Arrange
-        const int expectedValue = 31;
-
         // Act
-        var result = Day1.CalculateSimilarity(_leftList, _rightList);
-        
+        var result = Sut.Solve();
+
         // Assert
-        Assert.AreEqual(expectedValue, result); 
+        Assert.AreEqual("11", result.part1);
+        Assert.AreEqual("31", result.part2);
     }
 }

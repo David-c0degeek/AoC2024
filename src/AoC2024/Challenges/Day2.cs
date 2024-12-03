@@ -1,6 +1,4 @@
-﻿using AoC2024.Interfaces;
-
-namespace AoC2024.Challenges;
+﻿namespace AoC2024.Challenges;
 
 /// <summary>
 /// --- Day 2: Red-Nosed Reports ---
@@ -8,31 +6,27 @@ namespace AoC2024.Challenges;
 /// Fortunately, the first location The Historians want to search isn't a long walk from the Chief Historian's office.
 /// 
 /// </summary>
-public class Day2 : IChallenge
+public class Day2(string? inputPath = null) : BaseDay(inputPath)
 {
-    public int Day => 2;
+    public override int Day => 2;
 
-    private List<List<int>> LoadInput()
-    {
-        return File.ReadAllLines($"Inputs/Day{Day}.txt")
-            .Where(line => !string.IsNullOrWhiteSpace(line))
-            .Select(line => line.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .Select(int.Parse)
-                .ToList())
-            .ToList();
-    }
-
-    public (string part1, string part2) Solve()
+    public override (string part1, string part2) Solve()
     {
         var input = LoadInput();
-        
         var safeReports = CalculateSafeReports(input);
         var safeReportsWithDampener = CalculateSafeReportsWithProblemDampener(input);
         
         return (safeReports.ToString(), safeReportsWithDampener.ToString());
     }
     
-    /// <summary>
+    private List<List<int>> LoadInput() =>
+        GetInput()
+            .Select(line => line.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(int.Parse)
+                .ToList())
+            .ToList();
+
+        /// <summary>
     ///     While the Red-Nosed Reindeer nuclear fusion/fission plant appears to contain no sign of the Chief Historian, the engineers there run up to you as soon as they see you.
     ///     Apparently, they still talk about the time Rudolph was saved through molecular synthesis from a single electron.
     ///     
@@ -69,11 +63,9 @@ public class Day2 : IChallenge
     ///     Analyze the unusual data from the engineers. How many reports are safe?
     /// </summary>
     /// <returns></returns>
-    public static int CalculateSafeReports(List<List<int>> reports)
-    {
-        return reports.Count(IsSafe);
-    }
-
+    private static int CalculateSafeReports(List<List<int>> reports) =>
+        reports.Count(IsSafe);
+        
     private static bool IsSafe(List<int> report)
     {
         if (report.Count <= 1)
@@ -125,11 +117,8 @@ public class Day2 : IChallenge
     /// </summary>
     /// <param name="reports"></param>
     /// <returns></returns>
-    public static int CalculateSafeReportsWithProblemDampener(List<List<int>> reports)
-    {
-        return reports
-            .Count(report => report.Count <= 1 || IsSafeWithDampener(report));
-    }
+    public static int CalculateSafeReportsWithProblemDampener(List<List<int>> reports) => reports
+        .Count(report => report.Count <= 1 || IsSafeWithDampener(report));
     
     private static bool IsSafeWithDampener(List<int> report)
     {

@@ -4,35 +4,18 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace AoC2024.Test;
 
 [TestClass]
-public class Day2Tests
+public class Day2Tests : BaseDayTests<Day2>
 {
-    private readonly List<List<int>> _sampleInput =
-    [
-        new() { 7, 6, 4, 2, 1 },
-        new() { 1, 2, 7, 8, 9 },
-        new() { 9, 7, 6, 2, 1 },
-        new() { 1, 3, 2, 4, 5 },
-        new() { 8, 6, 4, 4, 1 },
-        new() { 1, 3, 6, 7, 9 }
-    ];
+  protected override Day2 CreateSut() => new("TestData/Day2Sample.txt");
 
     [TestMethod]
-    public void CalculateSafeReports_WithSampleInput_ReturnsTwo()
+    public void Solve_WithSampleInput_ReturnsExpectedResults()
     {
         // Act
-        var result = Day2.CalculateSafeReports(_sampleInput);
-        
-        // Assert
-        Assert.AreEqual(2, result);
-    }
+        var result = Sut.Solve();
 
-    [TestMethod]
-    public void CalculateSafeReportsWithProblemDampner_WithSampleInput_ReturnsFour()
-    {
-        // Act
-        var result = Day2.CalculateSafeReportsWithProblemDampener(_sampleInput);
-        
         // Assert
-        Assert.AreEqual(4, result);
+        Assert.AreEqual("2", result.part1);
+        Assert.AreEqual("4", result.part2);
     }
 }

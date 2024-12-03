@@ -24,8 +24,7 @@ public static class Program
         return Assembly.GetExecutingAssembly()
             .GetTypes()
             .Where(t => !t.IsAbstract && typeof(IChallenge).IsAssignableFrom(t))
-            .Select(Activator.CreateInstance)
-            .Cast<IChallenge>()
+            .Select(t => (IChallenge)Activator.CreateInstance(t, [null])!)
             .OrderBy(c => c.Day);
     }
 }
