@@ -1,8 +1,4 @@
-﻿
-
-using AoC2024.Interfaces;
-
-namespace AoC2024.Challenges;
+﻿namespace AoC2024.Challenges;
 
 /// <summary>
 /// --- Day 1: Historian Hysteria ---
@@ -74,7 +70,7 @@ public class Day1(string? inputPath = null) : BaseDay(inputPath)
     /// Your actual left and right lists contain many location IDs. What is the total distance between your lists?
     /// 
     /// </summary>
-    public static int CalculateDistance(List<int> left, List<int> right)
+    private static int CalculateDistance(List<int> left, List<int> right)
     {
         if (left.Count != right.Count)
         {
@@ -126,7 +122,7 @@ public class Day1(string? inputPath = null) : BaseDay(inputPath)
     /// 
     ///     Once again consider your left and right lists. What is their similarity score?
     /// </summary>
-    public static int CalculateSimilarity(List<int> left, List<int> right)
+    private static int CalculateSimilarity(List<int> left, List<int> right)
     {
         if (left.Count != right.Count)
         {

@@ -117,7 +117,7 @@ public class Day2(string? inputPath = null) : BaseDay(inputPath)
     /// </summary>
     /// <param name="reports"></param>
     /// <returns></returns>
-    public static int CalculateSafeReportsWithProblemDampener(List<List<int>> reports) => reports
+    private static int CalculateSafeReportsWithProblemDampener(List<List<int>> reports) => reports
         .Count(report => report.Count <= 1 || IsSafeWithDampener(report));
     
     private static bool IsSafeWithDampener(List<int> report)

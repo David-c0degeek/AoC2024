@@ -2,19 +2,12 @@
 
 namespace AoC2024.Challenges;
 
-public abstract class BaseDay : IChallenge
+public abstract class BaseDay(string? inputPath = null) : IChallenge
 {
-    private readonly string _inputPath;
-
-    protected BaseDay(string? inputPath = null)
-    {
-        _inputPath = inputPath ?? $"Inputs/Day{Day}.txt";
-    }
-
     public abstract int Day { get; }
 
     protected string[] GetInput() => 
-        File.ReadAllLines(_inputPath)
+        File.ReadAllLines(inputPath ?? $"Inputs/Day{Day}.txt")
             .Where(line => !string.IsNullOrWhiteSpace(line))
             .ToArray();
 
