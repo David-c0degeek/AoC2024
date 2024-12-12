@@ -16,6 +16,6 @@ public class Day4Tests: BaseDayTests<Day4>
 
         // Assert
         Assert.AreEqual("18", result.part1);
-        Assert.AreEqual(string.Empty, result.part2);
+        Assert.AreEqual("9", result.part2);
     }
 }

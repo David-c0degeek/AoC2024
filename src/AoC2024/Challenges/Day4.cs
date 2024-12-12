@@ -17,8 +17,9 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
         var input = LoadInput();
 
         var findXmas = FindXmas(input);
+        var findMas = FindMas(input);
 
-        return (findXmas.ToString(), string.Empty);
+        return (findXmas.ToString(), findMas.ToString());
     }
 
     private char[][] LoadInput() =>
@@ -102,6 +103,74 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
         }
 
         return sum;
+    }
+    
+    /// <summary>
+    ///
+    /// The Elf looks quizzically at you. Did you misunderstand the assignment?
+    /// 
+    /// Looking for the instructions, you flip over the word search to find that this isn't actually an XMAS puzzle; it's an X-MAS puzzle in which you're supposed to find two MAS in the shape of an X. One way to achieve that is like this:
+    /// 
+    /// M.S
+    /// .A.
+    /// M.S
+    /// 
+    /// Irrelevant characters have again been replaced with . in the above diagram. Within the X, each MAS can be written forwards or backwards.
+    /// 
+    /// Here's the same example from before, but this time all of the X-MASes have been kept instead:
+    /// 
+    /// .M.S......
+    /// ..A..MSMS.
+    /// .M.S.MAA..
+    /// ..A.ASMSM.
+    /// .M.S.M....
+    /// ..........
+    /// S.S.S.S.S.
+    /// .A.A.A.A..
+    /// M.M.M.M.M.
+    /// ..........
+    /// 
+    /// In this example, an X-MAS appears 9 times.
+    /// Flip the word search from the instructions back over to the word search side and try again. How many times does an X-MAS appear? 
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
+    private static int FindMas(char[][] input)
+    {
+        var count = 0;
+    
+        var diagonals = new[]
+        {
+            (Directions[4], Directions[7]),  // Left-Up and Right-Down
+            (Directions[5], Directions[6])   // Right-Up and Left-Down
+        };
+
+        for (var row = 1; row < input.Length - 1; row++)
+        {
+            for (var col = 1; col < input[0].Length - 1; col++)
+            {
+                if (input[row][col] == 'A' && 
+                    IsValidMs(input, row, col, diagonals[0].Item1, diagonals[0].Item2) && 
+                    IsValidMs(input, row, col, diagonals[1].Item1, diagonals[1].Item2))
+                {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private static bool IsValidMs(char[][] input, int row, int col, Direction dir1, Direction dir2)
+    {
+        var pos1Row = row + dir1.Row;
+        var pos1Col = col + dir1.Col;
+        var pos2Row = row + dir2.Row;
+        var pos2Col = col + dir2.Col;
+
+        return CheckValidPosition(input, pos1Row, pos1Col) && 
+               CheckValidPosition(input, pos2Row, pos2Col) &&
+               ((input[pos1Row][pos1Col] == 'M' && input[pos2Row][pos2Col] == 'S') ||
+                (input[pos1Row][pos1Col] == 'S' && input[pos2Row][pos2Col] == 'M'));
     }
 
     private static int CheckDirection(char[][] input, int row, int col, Direction direction)
