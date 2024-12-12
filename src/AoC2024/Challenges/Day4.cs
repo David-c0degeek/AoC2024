@@ -2,7 +2,6 @@
 
 /// <summary>
 /// --- Day 4: Ceres Search ---
-
 /// "Looks like the Chief's not here. Next!"
 ///  One of The Historians pulls out a device and pushes the only button on it.
 ///  After a brief flash, you recognize the interior of the Ceres monitoring station!
@@ -17,7 +16,7 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
         var input = LoadInput();
 
         var findXmas = FindXmas(input);
-        var findMas = FindMas(input);
+        var findMas = FindXWord(input, "MAS".ToCharArray());
 
         return (findXmas.ToString(), findMas.ToString());
     }
@@ -30,7 +29,7 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
     private static readonly char[] Xmas = ['X', 'M', 'A', 'S'];
 
     private record Direction(int Row, int Col);
-    
+
     private static readonly Direction[] Directions =
     [
         new(0, -1), // Left
@@ -93,7 +92,7 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
         var sum = 0;
         var rows = input.Length;
         var cols = input[0].Length;
-        
+
         for (var row = 0; row < rows; row++)
         {
             for (var col = 0; col < cols; col++)
@@ -104,9 +103,9 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
 
         return sum;
     }
-    
+
     /// <summary>
-    ///
+    /// 
     /// The Elf looks quizzically at you. Did you misunderstand the assignment?
     /// 
     /// Looking for the instructions, you flip over the word search to find that this isn't actually an XMAS puzzle; it's an X-MAS puzzle in which you're supposed to find two MAS in the shape of an X. One way to achieve that is like this:
@@ -134,43 +133,79 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
     /// Flip the word search from the instructions back over to the word search side and try again. How many times does an X-MAS appear? 
     /// </summary>
     /// <param name="input"></param>
+    /// <param name="wordToSearch"></param>
     /// <returns></returns>
-    private static int FindMas(char[][] input)
+    private static int FindXWord(char[][] input, char[] wordToSearch)
     {
+        // Word must have odd length to have a center character
+        if (wordToSearch.Length % 2 == 0) return 0;
+
         var count = 0;
-    
+        var halfLength = wordToSearch.Length / 2;
+        var centerChar = wordToSearch[halfLength];
+
+        // Get reversed word for checking both directions
+        var reversedWord = wordToSearch.Reverse().ToArray();
+
+        // Using the diagonal directions from Directions array
         var diagonals = new[]
         {
-            (Directions[4], Directions[7]),  // Left-Up and Right-Down
-            (Directions[5], Directions[6])   // Right-Up and Left-Down
+            (Directions[4], Directions[7]), // Left-Up and Right-Down
+            (Directions[5], Directions[6]) // Right-Up and Left-Down
         };
 
-        for (var row = 1; row < input.Length - 1; row++)
+        for (var row = halfLength; row < input.Length - halfLength; row++)
         {
-            for (var col = 1; col < input[0].Length - 1; col++)
+            for (var col = halfLength; col < input[0].Length - halfLength; col++)
             {
-                if (input[row][col] == 'A' && 
-                    IsValidMs(input, row, col, diagonals[0].Item1, diagonals[0].Item2) && 
-                    IsValidMs(input, row, col, diagonals[1].Item1, diagonals[1].Item2))
+                if (input[row][col] == centerChar &&
+                    IsValidXWord(input, row, col, diagonals[0].Item1, diagonals[0].Item2, wordToSearch, reversedWord,
+                        halfLength) &&
+                    IsValidXWord(input, row, col, diagonals[1].Item1, diagonals[1].Item2, wordToSearch, reversedWord,
+                        halfLength))
                 {
                     count++;
                 }
             }
         }
+
         return count;
     }
 
-    private static bool IsValidMs(char[][] input, int row, int col, Direction dir1, Direction dir2)
+    private static bool IsValidXWord(char[][] input, int row, int col, Direction dir1, Direction dir2,
+        char[] word, char[] reversedWord, int halfLength)
     {
-        var pos1Row = row + dir1.Row;
-        var pos1Col = col + dir1.Col;
-        var pos2Row = row + dir2.Row;
-        var pos2Col = col + dir2.Col;
+        // Check if either the forward or reversed word matches in this diagonal
+        return IsValidWordInDirection(input, row, col, dir1, dir2, word, halfLength) ||
+               IsValidWordInDirection(input, row, col, dir1, dir2, reversedWord, halfLength);
+    }
 
-        return CheckValidPosition(input, pos1Row, pos1Col) && 
-               CheckValidPosition(input, pos2Row, pos2Col) &&
-               ((input[pos1Row][pos1Col] == 'M' && input[pos2Row][pos2Col] == 'S') ||
-                (input[pos1Row][pos1Col] == 'S' && input[pos2Row][pos2Col] == 'M'));
+    private static bool IsValidWordInDirection(char[][] input, int row, int col, Direction dir1, Direction dir2,
+        char[] word, int halfLength)
+    {
+        // Check first half of the word (going in dir1 direction)
+        for (var i = 1; i <= halfLength; i++)
+        {
+            var checkRow = row + (dir1.Row * i);
+            var checkCol = col + (dir1.Col * i);
+
+            if (!CheckValidPosition(input, checkRow, checkCol) ||
+                input[checkRow][checkCol] != word[halfLength - i])
+                return false;
+        }
+
+        // Check second half of the word (going in dir2 direction)
+        for (var i = 1; i <= halfLength; i++)
+        {
+            var checkRow = row + (dir2.Row * i);
+            var checkCol = col + (dir2.Col * i);
+
+            if (!CheckValidPosition(input, checkRow, checkCol) ||
+                input[checkRow][checkCol] != word[halfLength + i])
+                return false;
+        }
+
+        return true;
     }
 
     private static int CheckDirection(char[][] input, int row, int col, Direction direction)
@@ -179,20 +214,19 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
         {
             var newRow = row + direction.Row * i;
             var newCol = col + direction.Col * i;
-            
+
             if (!CheckValidPosition(input, newRow, newCol) || input[newRow][newCol] != Xmas[i])
             {
                 return 0;
             }
         }
-        
+
         return 1;
     }
 
     private static bool CheckValidPosition(char[][] input, int row, int col)
     {
-        return row >= 0 && row < input.Length && 
+        return row >= 0 && row < input.Length &&
                col >= 0 && col < input[0].Length;
     }
-
 }
