@@ -1,4 +1,6 @@
-﻿namespace AoC2024.Challenges;
+﻿using AoC2024.Models;
+
+namespace AoC2024.Challenges;
 
 /// <summary>
 /// --- Day 4: Ceres Search ---
@@ -27,9 +29,7 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
             .ToArray();
 
     private static readonly char[] Xmas = ['X', 'M', 'A', 'S'];
-
-    private record Direction(int Row, int Col);
-
+    
     private static readonly Direction[] Directions =
     [
         new(0, -1), // Left
