@@ -18,8 +18,8 @@ public class Day3Tests : BaseDayTests<Day3>
         var result = sut.Solve();
 
         // Assert
-        Assert.AreEqual("161", result.part1);
-        Assert.AreEqual("161", result.part2);
+        Assert.AreEqual(161, result.part1);
+        Assert.AreEqual(161, result.part2);
     }
     
     [TestMethod]
@@ -32,7 +32,7 @@ public class Day3Tests : BaseDayTests<Day3>
         var result = sut.Solve();
 
         // Assert
-        Assert.AreEqual("161", result.part1);
-        Assert.AreEqual("48", result.part2);
+        Assert.AreEqual(161, result.part1);
+        Assert.AreEqual(48, result.part2);
     }
 }

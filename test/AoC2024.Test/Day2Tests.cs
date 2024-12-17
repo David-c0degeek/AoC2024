@@ -15,7 +15,7 @@ public class Day2Tests : BaseDayTests<Day2>
         var result = Sut.Solve();
 
         // Assert
-        Assert.AreEqual("2", result.part1);
-        Assert.AreEqual("4", result.part2);
+        Assert.AreEqual(2, result.part1);
+        Assert.AreEqual(4, result.part2);
     }
 }

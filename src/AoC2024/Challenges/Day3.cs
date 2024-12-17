@@ -19,7 +19,7 @@ public partial class Day3(string? inputPath = null) : BaseDay(inputPath)
 {
     public override int Day => 3;
 
-    public override (string part1, string part2) Solve()
+    public override (int part1, int part2) Solve()
     {
         var input = GetInput();
         var singleInputLine = string.Join(string.Empty, input);
@@ -27,7 +27,7 @@ public partial class Day3(string? inputPath = null) : BaseDay(inputPath)
         var mulResult = Multiply(singleInputLine);
         var mulWithFilterResult = MultiplyWithFiltering(singleInputLine);
 
-        return (mulResult.ToString(), mulWithFilterResult.ToString());
+        return (mulResult, mulWithFilterResult);
     }
     
     [GeneratedRegex(@"mul\(\d{1,3},\d{1,3}\)")]

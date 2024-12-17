@@ -10,13 +10,13 @@ public class Day2(string? inputPath = null) : BaseDay(inputPath)
 {
     public override int Day => 2;
 
-    public override (string part1, string part2) Solve()
+    public override (int part1, int part2) Solve()
     {
         var input = LoadInput();
         var safeReports = CalculateSafeReports(input);
         var safeReportsWithDampener = CalculateSafeReportsWithProblemDampener(input);
         
-        return (safeReports.ToString(), safeReportsWithDampener.ToString());
+        return (safeReports, safeReportsWithDampener);
     }
     
     private List<List<int>> LoadInput() =>

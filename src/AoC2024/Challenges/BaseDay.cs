@@ -11,5 +11,5 @@ public abstract class BaseDay(string? inputPath = null) : IChallenge
             .Where(line => !string.IsNullOrWhiteSpace(line))
             .ToArray();
 
-    public abstract (string part1, string part2) Solve();
+    public abstract (int part1, int part2) Solve();
 }

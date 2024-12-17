@@ -13,14 +13,14 @@ public class Day4(string? inputPath = null) : BaseDay(inputPath)
 {
     public override int Day => 4;
 
-    public override (string part1, string part2) Solve()
+    public override (int part1, int part2) Solve()
     {
         var input = LoadInput();
 
         var findXmas = FindXmas(input);
         var findMas = FindXWord(input, "MAS".ToCharArray());
 
-        return (findXmas.ToString(), findMas.ToString());
+        return (findXmas, findMas);
     }
 
     private char[][] LoadInput() =>
