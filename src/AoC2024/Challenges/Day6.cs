@@ -261,7 +261,7 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
         var map = ParseInput();
 
         var simulator = new GuardMovementSimulator(map);
-        var initialGuard = map.FindInitialGuard()!;
+        var initialGuard = new Guard(simulator.CurrentGuard!.Position, simulator.CurrentGuard.Facing);
 
         var distinctPositions = simulator.SimulateMovement();
 
