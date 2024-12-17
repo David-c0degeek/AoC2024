@@ -6,7 +6,7 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
 {
     public override int Day => 6;
 
-    private record Position(int Row, int Column)
+    public record Position(int Row, int Column)
     {
         public Position Move(Direction direction) =>
             new(Row + direction.Row, Column + direction.Col);
@@ -15,7 +15,7 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
             Row >= 0 && Row < totalRows && Column >= 0 && Column < totalColumns;
     }
 
-    private enum CellType
+    public enum CellType
     {
         Empty,
         Obstacle,
@@ -25,7 +25,7 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
         GuardDown
     }
 
-    private record Guard(Position Position, CellType Facing)
+    public record Guard(Position Position, CellType Facing)
     {
         public Guard TurnRight() =>
             this with { Facing = TurningPattern[Facing] };
@@ -34,10 +34,20 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
             this with { Position = Position.Move(direction) };
     }
 
-    private class LabMap(CellType[,] grid)
+    public class LabMap
     {
-        public readonly int Rows = grid.GetLength(0);
-        public readonly int Columns = grid.GetLength(1);
+        public readonly int Rows;
+        public readonly int Columns;
+
+        public LabMap(CellType[,] grid)
+        {
+            Grid = grid;
+
+            Rows = Grid.GetLength(0);
+            Columns = Grid.GetLength(1);
+        }
+
+        public CellType[,] Grid { get; set; }
 
         public Guard? FindInitialGuard()
         {
@@ -48,11 +58,11 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
                 CellType.GuardUp,
                 CellType.GuardDown
             };
-            
+
             for (var i = 0; i < Rows; i++)
             for (var j = 0; j < Columns; j++)
             {
-                var cell = grid[i, j];
+                var cell = Grid[i, j];
                 if (guardTypes.Contains(cell))
                     return new Guard(new Position(i, j), cell);
             }
@@ -62,18 +72,18 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
 
         public bool IsValidMove(Position position) =>
             !position.IsInBounds(Rows, Columns) ||
-            grid[position.Row, position.Column] != CellType.Obstacle;
+            Grid[position.Row, position.Column] != CellType.Obstacle;
 
         public void UpdatePosition(Position oldPos, Position newPos, CellType facing)
         {
             if (oldPos.IsInBounds(Rows, Columns))
             {
-                grid[oldPos.Row, oldPos.Column] = CellType.Empty;
+                Grid[oldPos.Row, oldPos.Column] = CellType.Empty;
             }
 
             if (newPos.IsInBounds(Rows, Columns))
             {
-                grid[newPos.Row, newPos.Column] = facing;
+                Grid[newPos.Row, newPos.Column] = facing;
             }
         }
     }
@@ -82,13 +92,14 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
     {
         private const int MaxRotations = 4;
         private readonly LabMap _map;
-        private readonly HashSet<Position> _visitedPositions = [];
+        public readonly HashSet<Position> VisitedPositions = [];
+        private readonly Dictionary<(Position Position, CellType Facing), int> _stateVisits = [];
         private Guard? _currentGuard;
         private int _visitCount;
 
         public GuardMovementSimulator(LabMap map)
         {
-            _map = map;
+            _map = new LabMap((CellType[,])map.Grid.Clone());
             _currentGuard = map.FindInitialGuard();
             if (_currentGuard == null)
             {
@@ -98,6 +109,10 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
             TrackPosition(_currentGuard.Position);
         }
 
+        /// <summary>
+        /// Returns -1 if guard is stuck in a loop
+        /// </summary>
+        /// <returns></returns>
         public int SimulateMovement()
         {
             if (_currentGuard == null)
@@ -105,37 +120,68 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
                 return 0;
             }
 
+            // Maximum possible unique states = grid size * 4 directions * 2 visits
+            // This accounts for visiting each position in each direction twice
+            var maxPossibleStates = _map.Rows * _map.Columns * 4 * 2;
+            var moveCount = 0;
+
             while (_currentGuard.Position.IsInBounds(_map.Rows, _map.Columns))
             {
-                MoveGuard();
+                if (moveCount++ > maxPossibleStates)
+                {
+                    return -1; // We must be in a loop if we've exceeded max possible states
+                }
+
+                if (!MoveGuard())
+                {
+                    return -1;
+                }
             }
 
             return _visitCount;
         }
 
-        private void MoveGuard()
+        private bool MoveGuard()
         {
-            var direction = GetNextValidDirection();
+            var newDirectionAttempt = GetNextValidDirection();
+            if (!newDirectionAttempt.Success)
+            {
+                return false;
+            }
+
             var oldPosition = _currentGuard!.Position;
-            _currentGuard = _currentGuard.Move(direction);
+            _currentGuard = _currentGuard.Move(newDirectionAttempt.NewDirection!);
 
             if (!_currentGuard.Position.IsInBounds(_map.Rows, _map.Columns))
             {
-                return;
+                return true;
             }
-    
+
+            // Track the state (position + facing direction)
+            var state = (_currentGuard.Position, _currentGuard.Facing);
+            _stateVisits[state] = _stateVisits.GetValueOrDefault(state) + 1;
+
+            // If we've seen this exact state (position + facing) more than twice,
+            // we're definitely in a loop
+            if (_stateVisits[state] > 2)
+            {
+                return false;
+            }
+
             _map.UpdatePosition(oldPosition, _currentGuard.Position, _currentGuard.Facing);
             TrackPosition(_currentGuard.Position);
+
+            return true;
         }
-        
-        private Direction GetNextValidDirection()
+
+        private (bool Success, Direction? NewDirection) GetNextValidDirection()
         {
             var direction = DirectionMappings[_currentGuard!.Facing];
             var nextPosition = _currentGuard.Position.Move(direction);
 
             if (!nextPosition.IsInBounds(_map.Rows, _map.Columns) || _map.IsValidMove(nextPosition))
             {
-                return direction;
+                return (true, direction);
             }
 
             return RotateUntilValidMove();
@@ -143,13 +189,15 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
 
         private void TrackPosition(Position position)
         {
-            if (_visitedPositions.Add(position))
+            if (VisitedPositions.Add(position))
             {
                 _visitCount++;
             }
         }
 
-        private Direction RotateUntilValidMove()
+        private bool HasVisitedPosition(Position position) => VisitedPositions.Contains(position);
+
+        private (bool Success, Direction? NewDirection) RotateUntilValidMove()
         {
             var rotationCount = 0;
 
@@ -162,128 +210,11 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
 
                 if (!nextPosition.IsInBounds(_map.Rows, _map.Columns) || _map.IsValidMove(nextPosition))
                 {
-                    return direction;
+                    return (true, direction);
                 }
             }
 
-            throw new InvalidOperationException("Guard is stuck - completed full rotation without finding valid move");
-        }
-
-        /// <summary>
-        ///
-        /// While The Historians begin working around the guard's patrol route, you borrow their fancy
-        /// device and step outside the lab. From the safety of a supply closet, you time travel through the
-        /// last few months and record the nightly status of the lab's guard post on the walls of the closet.
-        /// 
-        /// Returning after what seems like only a few seconds to The Historians, they explain that the guard's
-        /// patrol area is simply too large for them to safely search the lab without getting caught.
-        /// 
-        /// Fortunately, they are pretty sure that adding a single new obstruction won't cause a time paradox.
-        /// They'd like to place the new obstruction in such a way that the guard will get stuck in a loop,
-        /// making the rest of the lab safe to search.
-        /// 
-        /// To have the lowest chance of creating a time paradox, The Historians would like to know
-        /// all of the possible positions for such an obstruction. The new obstruction can't be placed at the guard's
-        /// starting position - the guard is there right now and would notice.
-        /// 
-        /// In the above example, there are only 6 different positions where a new obstruction would cause the guard 
-        /// to get stuck in a loop. The diagrams of these six situations use O to mark the new obstruction,
-        /// | to show a position where the guard moves up/down, - to show a position where the guard moves left/right,
-        /// and + to show a position where the guard moves both up/down and left/right.
-        /// 
-        /// Option one, put a printing press next to the guard's starting position:
-        /// 
-        /// ....#.....
-        /// ....+---+#
-        /// ....|...|.
-        /// ..#.|...|.
-        /// ....|..#|.
-        /// ....|...|.
-        /// .#.O^---+.
-        /// ........#.
-        /// #.........
-        /// ......#...
-        /// 
-        /// Option two, put a stack of failed suit prototypes in the bottom right quadrant of the mapped area:
-        /// 
-        /// ....#.....
-        /// ....+---+#
-        /// ....|...|.
-        /// ..#.|...|.
-        /// ..+-+-+#|.
-        /// ..|.|.|.|.
-        /// .#+-^-+-+.
-        /// ......O.#.
-        /// #.........
-        /// ......#...
-        /// 
-        /// Option three, put a crate of chimney-squeeze prototype fabric next to the standing 
-        /// desk in the bottom right quadrant:
-        /// 
-        /// ....#.....
-        /// ....+---+#
-        /// ....|...|.
-        /// ..#.|...|.
-        /// ..+-+-+#|.
-        /// ..|.|.|.|.
-        /// .#+-^-+-+.
-        /// .+----+O#.
-        /// #+----+...
-        /// ......#...
-        /// 
-        /// Option four, put an alchemical retroencabulator near the bottom left corner:
-        /// 
-        /// ....#.....
-        /// ....+---+#
-        /// ....|...|.
-        /// ..#.|...|.
-        /// ..+-+-+#|.
-        /// ..|.|.|.|.
-        /// .#+-^-+-+.
-        /// ..|...|.#.
-        /// #O+---+...
-        /// ......#...
-        /// 
-        /// Option five, put the alchemical retroencabulator a bit to the right instead:
-        /// 
-        /// ....#.....
-        /// ....+---+#
-        /// ....|...|.
-        /// ..#.|...|.
-        /// ..+-+-+#|.
-        /// ..|.|.|.|.
-        /// .#+-^-+-+.
-        /// ....|.|.#.
-        /// #..O+-+...
-        /// ......#...
-        /// 
-        /// Option six, put a tank of sovereign glue right next to the tank of universal solvent:
-        /// 
-        /// ....#.....
-        /// ....+---+#
-        /// ....|...|.
-        /// ..#.|...|.
-        /// ..+-+-+#|.
-        /// ..|.|.|.|.
-        /// .#+-^-+-+.
-        /// .+----++#.
-        /// #+----++..
-        /// ......#O..
-        /// 
-        /// It doesn't really matter what you choose to use as an obstacle so long as you and The Historians can put 
-        /// it into position without the guard noticing. 
-        /// The important thing is having enough options that you can find one that minimizes time paradoxes, 
-        /// and in this example, there are 6 different positions you could choose.
-        /// 
-        /// You need to get the guard stuck in a loop by adding a single new obstruction. 
-        /// How many different positions could you choose for this obstruction?
-        /// </summary>
-        /// <returns></returns>
-        public int CalculateAllPossibleObstaclePositionsToCreateALoop()
-        {
-            var sum = 0;
-            
-            return sum;
+            return (false, null);
         }
     }
 
@@ -324,12 +255,149 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
     public override (int part1, int part2) Solve()
     {
         var map = ParseInput();
+
         var simulator = new GuardMovementSimulator(map);
+
         var distinctPositions = simulator.SimulateMovement();
 
-        var possibleLoopPositions = simulator.CalculateAllPossibleObstaclePositionsToCreateALoop();
+        var allPossibleObstaclePositionsToCreateALoop =
+            CalculateAllPossibleObstaclePositionsToCreateALoop(simulator.VisitedPositions, map);
 
-        return (distinctPositions, possibleLoopPositions);
+        return (distinctPositions, allPossibleObstaclePositionsToCreateALoop);
+    }
+
+    /// <summary>
+    /// 
+    /// While The Historians begin working around the guard's patrol route, you borrow their fancy
+    /// device and step outside the lab. From the safety of a supply closet, you time travel through the
+    /// last few months and record the nightly status of the lab's guard post on the walls of the closet.
+    /// 
+    /// Returning after what seems like only a few seconds to The Historians, they explain that the guard's
+    /// patrol area is simply too large for them to safely search the lab without getting caught.
+    /// 
+    /// Fortunately, they are pretty sure that adding a single new obstruction won't cause a time paradox.
+    /// They'd like to place the new obstruction in such a way that the guard will get stuck in a loop,
+    /// making the rest of the lab safe to search.
+    /// 
+    /// To have the lowest chance of creating a time paradox, The Historians would like to know
+    /// all of the possible positions for such an obstruction. The new obstruction can't be placed at the guard's
+    /// starting position - the guard is there right now and would notice.
+    /// 
+    /// In the above example, there are only 6 different positions where a new obstruction would cause the guard 
+    /// to get stuck in a loop. The diagrams of these six situations use O to mark the new obstruction,
+    /// | to show a position where the guard moves up/down, - to show a position where the guard moves left/right,
+    /// and + to show a position where the guard moves both up/down and left/right.
+    /// 
+    /// Option one, put a printing press next to the guard's starting position:
+    /// 
+    /// ....#.....
+    /// ....+---+#
+    /// ....|...|.
+    /// ..#.|...|.
+    /// ....|..#|.
+    /// ....|...|.
+    /// .#.O^---+.
+    /// ........#.
+    /// #.........
+    /// ......#...
+    /// 
+    /// Option two, put a stack of failed suit prototypes in the bottom right quadrant of the mapped area:
+    /// 
+    /// ....#.....
+    /// ....+---+#
+    /// ....|...|.
+    /// ..#.|...|.
+    /// ..+-+-+#|.
+    /// ..|.|.|.|.
+    /// .#+-^-+-+.
+    /// ......O.#.
+    /// #.........
+    /// ......#...
+    /// 
+    /// Option three, put a crate of chimney-squeeze prototype fabric next to the standing 
+    /// desk in the bottom right quadrant:
+    /// 
+    /// ....#.....
+    /// ....+---+#
+    /// ....|...|.
+    /// ..#.|...|.
+    /// ..+-+-+#|.
+    /// ..|.|.|.|.
+    /// .#+-^-+-+.
+    /// .+----+O#.
+    /// #+----+...
+    /// ......#...
+    /// 
+    /// Option four, put an alchemical retroencabulator near the bottom left corner:
+    /// 
+    /// ....#.....
+    /// ....+---+#
+    /// ....|...|.
+    /// ..#.|...|.
+    /// ..+-+-+#|.
+    /// ..|.|.|.|.
+    /// .#+-^-+-+.
+    /// ..|...|.#.
+    /// #O+---+...
+    /// ......#...
+    /// 
+    /// Option five, put the alchemical retroencabulator a bit to the right instead:
+    /// 
+    /// ....#.....
+    /// ....+---+#
+    /// ....|...|.
+    /// ..#.|...|.
+    /// ..+-+-+#|.
+    /// ..|.|.|.|.
+    /// .#+-^-+-+.
+    /// ....|.|.#.
+    /// #..O+-+...
+    /// ......#...
+    /// 
+    /// Option six, put a tank of sovereign glue right next to the tank of universal solvent:
+    /// 
+    /// ....#.....
+    /// ....+---+#
+    /// ....|...|.
+    /// ..#.|...|.
+    /// ..+-+-+#|.
+    /// ..|.|.|.|.
+    /// .#+-^-+-+.
+    /// .+----++#.
+    /// #+----++..
+    /// ......#O..
+    /// 
+    /// It doesn't really matter what you choose to use as an obstacle so long as you and The Historians can put 
+    /// it into position without the guard noticing. 
+    /// The important thing is having enough options that you can find one that minimizes time paradoxes, 
+    /// and in this example, there are 6 different positions you could choose.
+    /// 
+    /// You need to get the guard stuck in a loop by adding a single new obstruction. 
+    /// How many different positions could you choose for this obstruction?
+    /// </summary>
+    /// <param name="possibleObstaclePositions"></param>
+    /// <param name="initialMap"></param>
+    /// <returns></returns>
+    private static int CalculateAllPossibleObstaclePositionsToCreateALoop(HashSet<Position> possibleObstaclePositions,
+        LabMap initialMap)
+    {
+        var sum = 0;
+
+        possibleObstaclePositions.Remove(initialMap.FindInitialGuard()!.Position);
+
+        foreach (var position in possibleObstaclePositions)
+        {
+            var newMap = new LabMap((CellType[,])initialMap.Grid.Clone());
+            newMap.UpdatePosition(position, position, CellType.Obstacle);
+            var simulator = new GuardMovementSimulator(newMap);
+
+            if (simulator.SimulateMovement() == -1)
+            {
+                sum++;
+            }
+        }
+
+        return sum;
     }
 
     private LabMap ParseInput()
