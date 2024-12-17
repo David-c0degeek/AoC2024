@@ -34,7 +34,7 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
             this with { Position = Position.Move(direction) };
     }
 
-    public class LabMap
+    private class LabMap
     {
         public readonly int Rows;
         public readonly int Columns;
@@ -76,14 +76,15 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
 
         public void UpdatePosition(Position oldPos, Position newPos, CellType facing)
         {
-            if (oldPos.IsInBounds(Rows, Columns))
-            {
-                Grid[oldPos.Row, oldPos.Column] = CellType.Empty;
-            }
+            SetGridCellType(oldPos, CellType.Empty);
+            SetGridCellType(newPos, facing);
+        }
 
-            if (newPos.IsInBounds(Rows, Columns))
+        public void SetGridCellType(Position position, CellType cellType)
+        {
+            if (position.IsInBounds(Rows, Columns))
             {
-                Grid[newPos.Row, newPos.Column] = facing;
+                Grid[position.Row, position.Column] = cellType;
             }
         }
     }
@@ -94,19 +95,33 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
         private readonly LabMap _map;
         public readonly HashSet<Position> VisitedPositions = [];
         private readonly Dictionary<(Position Position, CellType Facing), int> _stateVisits = [];
-        private Guard? _currentGuard;
+        public Guard? CurrentGuard;
         private int _visitCount;
 
         public GuardMovementSimulator(LabMap map)
         {
-            _map = new LabMap((CellType[,])map.Grid.Clone());
-            _currentGuard = map.FindInitialGuard();
-            if (_currentGuard == null)
+            _map = map;
+            CurrentGuard = map.FindInitialGuard();
+            if (CurrentGuard == null)
             {
                 return;
             }
 
-            TrackPosition(_currentGuard.Position);
+            TrackPosition(CurrentGuard.Position);
+        }
+
+        public void Reset(Guard toGuardState)
+        {
+            _visitCount = 0;
+            VisitedPositions.Clear();
+            _stateVisits.Clear();
+            CurrentGuard = new Guard(toGuardState.Position, toGuardState.Facing);
+            UpdateCellType(CurrentGuard.Position, CurrentGuard.Facing);
+        }
+
+        public void UpdateCellType(Position position, CellType cellType)
+        {
+            _map.SetGridCellType(position, cellType);
         }
 
         /// <summary>
@@ -115,23 +130,13 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
         /// <returns></returns>
         public int SimulateMovement()
         {
-            if (_currentGuard == null)
+            if (CurrentGuard == null)
             {
                 return 0;
             }
 
-            // Maximum possible unique states = grid size * 4 directions * 2 visits
-            // This accounts for visiting each position in each direction twice
-            var maxPossibleStates = _map.Rows * _map.Columns * 4 * 2;
-            var moveCount = 0;
-
-            while (_currentGuard.Position.IsInBounds(_map.Rows, _map.Columns))
+            while (CurrentGuard.Position.IsInBounds(_map.Rows, _map.Columns))
             {
-                if (moveCount++ > maxPossibleStates)
-                {
-                    return -1; // We must be in a loop if we've exceeded max possible states
-                }
-
                 if (!MoveGuard())
                 {
                     return -1;
@@ -149,35 +154,36 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
                 return false;
             }
 
-            var oldPosition = _currentGuard!.Position;
-            _currentGuard = _currentGuard.Move(newDirectionAttempt.NewDirection!);
+            var oldPosition = CurrentGuard!.Position;
+            CurrentGuard = CurrentGuard.Move(newDirectionAttempt.NewDirection!);
 
-            if (!_currentGuard.Position.IsInBounds(_map.Rows, _map.Columns))
+            if (!CurrentGuard.Position.IsInBounds(_map.Rows, _map.Columns))
             {
                 return true;
             }
 
             // Track the state (position + facing direction)
-            var state = (_currentGuard.Position, _currentGuard.Facing);
+            var state = (CurrentGuard.Position, CurrentGuard.Facing);
             _stateVisits[state] = _stateVisits.GetValueOrDefault(state) + 1;
 
-            // If we've seen this exact state (position + facing) more than twice,
-            // we're definitely in a loop
-            if (_stateVisits[state] > 2)
+            // If we've seen this exact state twice (position and facing), we're in a loop
+            // Since the grid is finite and movements are deterministic,
+            // visiting the same state twice means we'll keep repeating
+            if (_stateVisits[state] > 1)
             {
                 return false;
             }
 
-            _map.UpdatePosition(oldPosition, _currentGuard.Position, _currentGuard.Facing);
-            TrackPosition(_currentGuard.Position);
+            _map.UpdatePosition(oldPosition, CurrentGuard.Position, CurrentGuard.Facing);
+            TrackPosition(CurrentGuard.Position);
 
             return true;
         }
 
         private (bool Success, Direction? NewDirection) GetNextValidDirection()
         {
-            var direction = DirectionMappings[_currentGuard!.Facing];
-            var nextPosition = _currentGuard.Position.Move(direction);
+            var direction = DirectionMappings[CurrentGuard!.Facing];
+            var nextPosition = CurrentGuard.Position.Move(direction);
 
             if (!nextPosition.IsInBounds(_map.Rows, _map.Columns) || _map.IsValidMove(nextPosition))
             {
@@ -194,18 +200,16 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
                 _visitCount++;
             }
         }
-
-        private bool HasVisitedPosition(Position position) => VisitedPositions.Contains(position);
-
+        
         private (bool Success, Direction? NewDirection) RotateUntilValidMove()
         {
             var rotationCount = 0;
 
             while (rotationCount < MaxRotations)
             {
-                _currentGuard = _currentGuard!.TurnRight();
-                var direction = DirectionMappings[_currentGuard.Facing];
-                var nextPosition = _currentGuard.Position.Move(direction);
+                CurrentGuard = CurrentGuard!.TurnRight();
+                var direction = DirectionMappings[CurrentGuard.Facing];
+                var nextPosition = CurrentGuard.Position.Move(direction);
                 rotationCount++;
 
                 if (!nextPosition.IsInBounds(_map.Rows, _map.Columns) || _map.IsValidMove(nextPosition))
@@ -257,11 +261,12 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
         var map = ParseInput();
 
         var simulator = new GuardMovementSimulator(map);
+        var initialGuard = map.FindInitialGuard()!;
 
         var distinctPositions = simulator.SimulateMovement();
 
         var allPossibleObstaclePositionsToCreateALoop =
-            CalculateAllPossibleObstaclePositionsToCreateALoop(simulator.VisitedPositions, map);
+            CalculateAllPossibleObstaclePositionsToCreateALoop(simulator, initialGuard);
 
         return (distinctPositions, allPossibleObstaclePositionsToCreateALoop);
     }
@@ -375,26 +380,29 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
     /// You need to get the guard stuck in a loop by adding a single new obstruction. 
     /// How many different positions could you choose for this obstruction?
     /// </summary>
-    /// <param name="possibleObstaclePositions"></param>
-    /// <param name="initialMap"></param>
+    /// <param name="simulator"></param>
+    /// <param name="initialGuard"></param>
     /// <returns></returns>
-    private static int CalculateAllPossibleObstaclePositionsToCreateALoop(HashSet<Position> possibleObstaclePositions,
-        LabMap initialMap)
+    private static int CalculateAllPossibleObstaclePositionsToCreateALoop(GuardMovementSimulator simulator,
+        Guard initialGuard)
     {
         var sum = 0;
 
-        possibleObstaclePositions.Remove(initialMap.FindInitialGuard()!.Position);
+        var possibleObstaclePositions = simulator.VisitedPositions.ToList();
+        possibleObstaclePositions.Remove(initialGuard.Position);
 
         foreach (var position in possibleObstaclePositions)
         {
-            var newMap = new LabMap((CellType[,])initialMap.Grid.Clone());
-            newMap.UpdatePosition(position, position, CellType.Obstacle);
-            var simulator = new GuardMovementSimulator(newMap);
-
+            simulator.Reset(initialGuard);
+            simulator.UpdateCellType(position, CellType.Obstacle);
+            
             if (simulator.SimulateMovement() == -1)
             {
                 sum++;
             }
+            
+            simulator.UpdateCellType(simulator.CurrentGuard!.Position, CellType.Empty);
+            simulator.UpdateCellType(position, CellType.Empty);
         }
 
         return sum;
