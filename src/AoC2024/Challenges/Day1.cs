@@ -14,12 +14,12 @@ public class Day1(string? inputPath = null) : BaseDay(inputPath)
 {
     public override int Day => 1;
 
-    public override (int part1, int part2) Solve()
+    public override (string part1, string part2) Solve(bool? solvePart1 = true, bool? solvePart2 = true)
     {
         var input = LoadInput();
         var distance = CalculateDistance(input.left, input.right);
         var similarity = CalculateSimilarity(input.left, input.right);
-        return (distance, similarity);
+        return (distance.ToString(), similarity.ToString());
     }
 
     private (List<int> left, List<int> right) LoadInput()

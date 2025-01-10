@@ -3,5 +3,5 @@
 public interface IChallenge
 {
     int Day { get; }
-    (int part1, int part2) Solve();
+    (string part1, string part2) Solve(bool? solvePart1 = true, bool? solvePart2 = true);
 }

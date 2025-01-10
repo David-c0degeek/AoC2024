@@ -9,8 +9,14 @@ public static class Program
     {
         var challenges = GetChallengesFromAssembly();
 
+        var daysToRun = new[] { 17 };
+        
         foreach (var challenge in challenges)
         {
+            if (!daysToRun.Contains(challenge.Day))
+            {
+                continue;
+            }
             var results = challenge.Solve();
             Console.WriteLine($"Day {challenge.Day}:");
             Console.WriteLine($"Part 1: {results.part1}");

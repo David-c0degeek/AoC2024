@@ -256,7 +256,7 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
         [CellType.GuardLeft] = CellType.GuardUp
     };
 
-    public override (int part1, int part2) Solve()
+    public override (string part1, string part2) Solve(bool? solvePart1 = true, bool? solvePart2 = true)
     {
         var map = ParseInput();
 
@@ -268,7 +268,7 @@ public class Day6(string? inputPath = null) : BaseDay(inputPath)
         var allPossibleObstaclePositionsToCreateALoop =
             CalculateAllPossibleObstaclePositionsToCreateALoop(simulator, initialGuard);
 
-        return (distinctPositions, allPossibleObstaclePositionsToCreateALoop);
+        return (distinctPositions.ToString(), allPossibleObstaclePositionsToCreateALoop.ToString());
     }
 
     /// <summary>

@@ -6,7 +6,7 @@ public class Day5(string? inputPath = null) : BaseDay(inputPath)
 
     private record Order(int First, int Second);
 
-    public override (int part1, int part2) Solve()
+    public override (string part1, string part2) Solve(bool? solvePart1 = true, bool? solvePart2 = true)
     {
         var (pageOrdering, orderingRules) = LoadInput();
 
@@ -18,7 +18,7 @@ public class Day5(string? inputPath = null) : BaseDay(inputPath)
         var sumCorrectOrderMiddlePage = SumCorrectOrderMiddlePage(pageOrdering, orderingRules);
         var sumCorrectOrderMiddlePageAndRemaining = CorrectTheOrderAndSumRemaining(pageOrdering, orderingRules);
 
-        return (sumCorrectOrderMiddlePage, sumCorrectOrderMiddlePageAndRemaining);
+        return (sumCorrectOrderMiddlePage.ToString(), sumCorrectOrderMiddlePageAndRemaining.ToString());
     }
 
     private static bool ValidateInput(List<int[]> pageOrdering, List<Order> orderingRules)
