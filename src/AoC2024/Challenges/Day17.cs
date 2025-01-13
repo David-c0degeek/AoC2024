@@ -142,7 +142,7 @@ public class Day17(string? inputPath = null) : BaseDay(inputPath)
                 case 0: //adv
                     currentState = currentState with
                     {
-                        RegisterA = currentState.RegisterA / (1 << GetComboOperandValue(operand, currentState))
+                        RegisterA = DivideCombo(currentState, operand)
                     };
                     break;
                 case 1: //bxl
@@ -176,13 +176,13 @@ public class Day17(string? inputPath = null) : BaseDay(inputPath)
                 case 6: //bdv
                     currentState = currentState with
                     {
-                        RegisterB = currentState.RegisterA / (1 << GetComboOperandValue(operand, currentState))
+                        RegisterB = DivideCombo(currentState, operand)
                     };
                     break;
                 case 7: //cdv
                     currentState = currentState with
                     {
-                        RegisterC = currentState.RegisterA / (1 << GetComboOperandValue(operand, currentState))
+                        RegisterC = DivideCombo(currentState, operand)
                     };
                     break;
                 default:
@@ -196,6 +196,11 @@ public class Day17(string? inputPath = null) : BaseDay(inputPath)
         }
 
         return string.Join(",", outputList);
+    }
+
+    private static int DivideCombo(State currentState, int operand)
+    {
+        return currentState.RegisterA / (1 << GetComboOperandValue(operand, currentState));
     }
 
     /// <summary>
